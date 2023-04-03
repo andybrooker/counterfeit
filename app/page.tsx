@@ -102,6 +102,7 @@ const ProductListing = ({ product }: ProductListing) => {
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
+              color: "var(--concrete-primary)",
             }}
           >
             <div style={{ fontSize: "14px", fontWeight: 500 }}>
