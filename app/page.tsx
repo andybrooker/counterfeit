@@ -73,7 +73,11 @@ const ProductListing = ({ product }: ProductListing) => {
           position: "relative",
         }}
       >
-        <Image fill src={product.image_url} alt="coffee" />
+        <Image
+          fill
+          src={product.image_url}
+          alt="Midjourney generated product. Prompt coming soon."
+        />
       </div>
 
       <div
