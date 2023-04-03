@@ -1,91 +1,114 @@
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
-import styles from './page.module.css'
+import Image from "next/image";
+import styles from "./page.module.css";
+import Logo from "@/components/Logo";
+import { cache } from "react";
+import { db } from "@/lib/db";
+import { BrandsOnProducts, Product } from "@prisma/client";
 
-const inter = Inter({ subsets: ['latin'] })
+const getProducts = cache(async () => {
+  return await db.product.findMany({
+    include: {
+      brands: {
+        select: {
+          brand: {
+            select: {
+              title: true,
+            },
+          },
+        },
+      },
+    },
+  });
+});
 
-export default function Home() {
+export default async function Home() {
+  const products = await getProducts();
+
   return (
     <main className={styles.main}>
       <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+        <div className={styles.nav}>
+          <Logo />
+          <span className={styles.about}>
+            {"a midjourney experiment by "}
+            <a
+              target="_blank"
+              rel="noopener"
+              href="https://twitter.com/andynbrooker"
+            >
+              @andynbrooker
+            </a>
+          </span>
         </div>
       </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-        <div className={styles.thirteen}>
-          <Image src="/thirteen.svg" alt="13" width={40} height={31} priority />
+      <div className={styles.gridContainer}>
+        <div className={styles.grid}>
+          {products.map((value) => (
+            <ProductListing key={value.id} product={value} />
+          ))}
         </div>
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://beta.nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p className={inter.className}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p className={inter.className}>Explore the Next.js 13 playground.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p className={inter.className}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
       </div>
     </main>
-  )
+  );
 }
+
+type ProductListing = {
+  product: Product & {
+    brands: {
+      brand: {
+        title: string;
+      };
+    }[];
+  };
+};
+
+const ProductListing = ({ product }: ProductListing) => {
+  return (
+    <div style={{ padding: 0 }}>
+      <div
+        className={styles.photoContainer}
+        style={{
+          aspectRatio: "3 / 4",
+          backgroundColor: "white",
+          position: "relative",
+        }}
+      >
+        <Image fill src={product.image_url} alt="coffee" />
+      </div>
+
+      <div
+        style={{
+          padding: "24px 8px",
+          display: "flex",
+          alignItems: "flex-end",
+          justifyContent: "space-between",
+          width: "100%",
+        }}
+      >
+        <div
+          style={{ display: "flex", flexDirection: "column", width: "100%" }}
+        >
+          <div style={{ fontSize: "12px", color: "var(--concrete-secondary)" }}>
+            {product.brands
+              .map((item) => item.brand.title.toLowerCase())
+              .join(" x ")}
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <div style={{ fontSize: "14px", fontWeight: 500 }}>
+              {product.title}
+            </div>
+            <div style={{ fontSize: "14px", fontWeight: 500 }}>
+              £{product.price.toLocaleString("en-US")}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
